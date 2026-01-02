@@ -36,26 +36,42 @@ def create_app():
     """Application factory pattern"""
     # Initialize Flask app
     app = Flask(__name__)
-    
-    # Configure CORS for production
+
+    # Configure CORS for production (relaxed; tighten in real deployment)
     CORS(app, resources={
         r"/api/*": {
-            "origins": ["*"],  # Allow all origins for Railway deployment
+            "origins": ["*"],
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"]
         }
     })
-    
+
     # Load configuration
     app.config.from_object(Config)
-    
+
     # Create necessary folders
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     os.makedirs('saved_models', exist_ok=True)
-    
+
     # Initialize database
     init_db(app)
-    
+
+    # Perform one-time initialization that must also run under gunicorn
+    from models.database import db
+    with app.app_context():
+        try:
+            create_admin_user(
+                db,
+                email='admin@smartfarming.com',
+                password='admin123',
+                full_name='System Administrator'
+            )
+        except Exception as e:
+            print(f"Admin creation note: {e}")
+
+        # Load ML models
+        load_models()
+
     # Register routes
     register_auth_routes(app)
     register_farmer_routes(app)
@@ -64,7 +80,7 @@ def create_app():
     register_labor_routes(app)
     register_admin_routes(app)
     register_error_handlers(app)
-    
+
     return app
 
 
@@ -74,24 +90,9 @@ def allowed_file(filename):
 
 
 if __name__ == '__main__':
+    # Local development entrypoint
     app = create_app()
-    
-    with app.app_context():
-        # Create default admin user
-        try:
-            from models.database import db
-            create_admin_user(
-                db,
-                email='admin@smartfarming.com',
-                password='admin123',
-                full_name='System Administrator'
-            )
-        except Exception as e:
-            print(f"Admin creation note: {e}")
-        
-        # Load ML models
-        load_models()
-    
+
     print("=" * 60)
     print("🌾 Smart Farming Platform API")
     print("=" * 60)
@@ -99,7 +100,7 @@ if __name__ == '__main__':
     print("✓ Database: SQLite (smart_farming.db)")
     print("✓ Default admin: admin@smartfarming.com / admin123")
     print("=" * 60)
-    
+
     # Run the application
     port = int(os.environ.get('PORT', 5001))
     app.run(debug=False, host='0.0.0.0', port=port)
