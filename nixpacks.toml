@@ -3,7 +3,7 @@ nixPkgs = ['python311', 'nodejs-18_x']
 
 [phases.install]
 cmds = [
-  'python3 -m pip install --upgrade pip',
+  'python3 -m ensurepip --upgrade || true',
   'python3 -m pip install -r backend/requirements.txt',
   'cd frontend && npm install && npm run build'
 ]
