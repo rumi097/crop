@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ['python311', 'nodejs-18_x']
+
+[phases.install]
+cmds = [
+  'pip install -r backend/requirements.txt',
+  'cd frontend && npm install && npm run build'
+]
+
+[phases.build]
+cmds = ['cd frontend && npm run build']
+
+[start]
+cmd = 'cd backend && gunicorn --bind 0.0.0.0:$PORT app:app'

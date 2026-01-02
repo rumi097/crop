@@ -36,7 +36,15 @@ def create_app():
     """Application factory pattern"""
     # Initialize Flask app
     app = Flask(__name__)
-    CORS(app)  # Enable CORS for React frontend
+    
+    # Configure CORS for production
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": ["*"],  # Allow all origins for Railway deployment
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"]
+        }
+    })
     
     # Load configuration
     app.config.from_object(Config)
@@ -93,4 +101,5 @@ if __name__ == '__main__':
     print("=" * 60)
     
     # Run the application
-    app.run(debug=False, host='0.0.0.0', port=5001)
+    port = int(os.environ.get('PORT', 5001))
+    app.run(debug=False, host='0.0.0.0', port=port)
