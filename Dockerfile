@@ -8,17 +8,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+WORKDIR /app/backend
 
 # Copy backend code and requirements
 COPY backend/ /app/backend/
-COPY backend/requirements.txt /app/backend/requirements.txt
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r /app/backend/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the port Railway will route to (PORT env is used at runtime)
 EXPOSE 8000
 
-# Use gunicorn with the Flask app factory
-CMD ["bash", "-lc", "cd backend && gunicorn 'app:create_app()' --bind 0.0.0.0:${PORT:-8000}"]
+# Use gunicorn with the Flask app factory (PORT provided by Railway)
+CMD ["gunicorn", "app:create_app()", "--bind", "0.0.0.0:${PORT:-8000}"]
