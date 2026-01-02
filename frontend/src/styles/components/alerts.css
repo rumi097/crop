@@ -1,0 +1,59 @@
+/* ==========================================
+   ALERTS
+   ========================================== */
+
+.alert {
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slideInRight 0.4s ease-out;
+  box-shadow: var(--shadow-md);
+  font-weight: 500;
+}
+
+.alert::before {
+  font-size: 1.5rem;
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border-left: 4px solid var(--success);
+}
+
+.alert-success::before {
+  content: "✓";
+}
+
+.alert-error {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #991b1b;
+  border-left: 4px solid var(--danger);
+}
+
+.alert-error::before {
+  content: "⚠";
+}
+
+.alert-info {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  border-left: 4px solid var(--info);
+}
+
+.alert-info::before {
+  content: "ℹ";
+}
+
+.alert-warning {
+  background: linear-gradient(135deg, #fed7aa, #fdba74);
+  color: #92400e;
+  border-left: 4px solid var(--warning);
+}
+
+.alert-warning::before {
+  content: "⚡";
+}

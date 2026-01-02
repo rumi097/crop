@@ -1,0 +1,6 @@
+/* Farmer portal specific layout and overrides.
+   Core shared styles still live in App.css via styles/main.css. */
+
+.farmer-portal-root {
+  /* Hook for farmer-specific layout tweaks if needed */
+}

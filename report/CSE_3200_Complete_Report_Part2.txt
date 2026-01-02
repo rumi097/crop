@@ -1,0 +1,516 @@
+═══════════════════════════════════════════════════════════════════════
+
+CHAPTER 5
+System Design & Architecture
+
+
+5.1 Methodological Structure
+
+The overall system design followed an incremental and modular development methodology inspired by agile principles. Rather than attempting to build the entire system at once, the project was broken into vertical slices—each covering backend, frontend, and database aspects for a particular feature.
+
+Key methodological decisions:
+• Start with core infrastructure (authentication, database, basic routing)
+• Implement one portal at a time while reusing shared patterns
+• Continuously test critical workflows as they are developed
+• Regularly refactor shared components (e.g., ProfileEditor) to reduce duplication
+
+Design Artifacts Produced:
+• Architecture diagram connecting frontend, backend, and database
+• ER diagram for database schema
+• API contract documentation describing endpoints, request/response formats
+• UI wireframes for primary screens (landing page, portals, forms)
+
+
+5.2 High-Level Architecture Diagram
+
+The system is organized as a typical three-tier architecture:
+
+1. Presentation Layer (Frontend)
+   • React single-page application served from the frontend build
+   • Components structured by feature (portals, auth, shared components)
+   • Axios used for HTTP communication with the backend
+   • Local storage used for JWT token persistence
+
+2. Application Layer (Backend)
+   • Flask application exposing RESTful JSON APIs
+   • Blueprints used to group route handlers by portal (farmer_routes, buyer_routes, etc.)
+   • Service layer for ML model inference and evaluation
+   • Utility modules for authentication, preprocessing, and evaluation
+
+3. Data Layer (Database & Models)
+   • SQLite database file (smart_farming.db) in backend directory
+   • SQLAlchemy ORM models representing application entities
+   • Relationship mappings using foreign keys for user-role connections and orders
+
+Data Flow Summary:
+• User interacts with React UI → UI triggers Axios request → Flask endpoint handles request
+• Backend authenticates request via JWT → interacts with SQLAlchemy models → commits to SQLite
+• Response is serialized to JSON and returned → frontend updates state and renders view
+
+{Figure 5.1: High-Level System Architecture Diagram}
+
+
+5.3 Module Interaction Diagram
+
+Core modules and their interactions:
+
+Authentication & Authorization:
+• Frontend auth components (Login, Register) interact with /api/auth/login and /api/auth/register
+• Backend auth module validates credentials, generates JWTs, and encodes role information
+• Protected endpoints use decorators to enforce role-based access
+
+Portals & Routes:
+• Farmer portal components call farmer_routes for listings, costs, labor, and recommendations
+• Buyer portal components call buyer_routes for marketplace, cart, and orders
+• Vendor portal components call vendor_routes for product management and vendor orders
+• Labor portal components call labor_routes to fetch jobs and manage applications
+• Admin portal components call admin_routes for analytics and user management
+
+ML Services:
+• Farmer portal recommendation components call ML service endpoints
+• Backend services/ml_models.py loads and runs models, returning predictions
+
+Shared Utilities:
+• utils/auth.py provides helper functions for token handling and password hashing
+• utils/preprocessing.py prepares input data for ML models
+• utils/evaluation.py supports any experimental metrics and logging
+
+{Figure 5.2: Module Interaction Flow Diagram}
+
+
+5.4 Database Schema / ER Diagram
+
+The database schema is centered around the user entity and its relationships to portal-specific entities.
+
+Core Entities:
+• User: Stores login credentials, role, and base profile fields
+• FarmerProfile, VendorProfile, LaborProfile: Store additional role-specific fields
+• CropListing: Represents crops listed by farmers (includes location field)
+• VendorProduct: Represents vendor-listed agricultural products
+• Order: Represents both crop and product orders depending on type
+• LaborHiring: Represents labor job postings and applications
+• CostRecord: Stores cost entries for farming activities
+• RecommendationHistory: Stores results of ML recommendations for auditing
+
+Relationships:
+• One User → One FarmerProfile (for farmer role)
+• One User → Many CropListings
+• One User → Many Orders (as buyer)
+• One User → Many VendorProducts (as vendor)
+• One User → Many LaborHiring entries (as farmer posting job or labor applying)
+
+Storage Decisions:
+• Use INTEGER primary keys with AUTOINCREMENT for simplicity
+• Use foreign keys to enforce referential integrity between users and related records
+• Store dates as strings in ISO format for simplicity in SQLite
+
+{Figure 5.3: Database Entity-Relationship (ER) Diagram}
+
+
+5.5 Interface Specifications / API Contracts
+
+API endpoints are grouped by concern. Each endpoint uses JSON for both request and response bodies.
+
+Authentication APIs:
+• POST /api/auth/register
+  - Request: { name, email, password, role, phone, address }
+  - Response: { message }
+
+• POST /api/auth/login
+  - Request: { email, password }
+  - Response: { token, role, name }
+
+Profile APIs (shared):
+• GET /api/profile
+  - Headers: Authorization: Bearer <JWT>
+  - Response: { user, profile }
+
+• PUT /api/profile
+  - Headers: Authorization: Bearer <JWT>
+  - Request: { name?, phone?, address?, roleSpecificFields... }
+  - Response: { message, updatedProfile }
+
+Farmer APIs:
+• GET /api/farmer/dashboard
+• POST /api/farmer/crop-listings
+• GET /api/farmer/crop-listings
+• PUT /api/farmer/crop-listings/<id>
+• DELETE /api/farmer/crop-listings/<id>
+• GET /api/farmer/orders
+• POST /api/farmer/cost-records
+• GET /api/farmer/cost-records
+• POST /api/farmer/labor-posts
+• GET /api/farmer/labor-posts
+
+Buyer APIs:
+• GET /api/public/marketplace
+• POST /api/buyer/orders
+• GET /api/buyer/orders
+• GET /api/buyer/dashboard
+
+Vendor APIs:
+• POST /api/vendor/products
+• GET /api/vendor/products
+• PUT /api/vendor/products/<id>
+• DELETE /api/vendor/products/<id>
+• GET /api/vendor/orders
+
+Labor APIs:
+• GET /api/labor/jobs
+• POST /api/labor/applications
+• GET /api/labor/applications
+
+Admin APIs:
+• GET /api/admin/summary
+• GET /api/admin/users
+• PUT /api/admin/users/<id>/status
+
+ML Service APIs:
+• POST /api/ml/crop-recommendation
+• POST /api/ml/fertilizer-recommendation
+• POST /api/ml/disease-recognition
+
+{Table 5.1: API Endpoint Specifications (expanded in API_DOCUMENTATION.md)}
+
+
+5.6 Security & Performance Design
+
+Security Measures:
+• JWT-based authentication with token expiration
+• Role-based access checks on protected routes
+• Password hashing using Werkzeug security functions
+• Input validation on backend for all critical fields
+• CORS configured to allow only frontend origin during deployment
+
+Performance Considerations:
+• Reuse of SQLAlchemy sessions to avoid overhead
+• Use of to_dict() methods to control serialization payload size
+• Lazy loading of heavy ML models only once at server startup
+• Pagination-ready endpoints (where necessary) to prevent large responses
+
+Scalability Considerations:
+• Clear separation between frontend and backend services
+• Reduction in coupling by using JSON contracts rather than shared state
+• Ability to swap SQLite with PostgreSQL/MySQL with minimal code changes
+
+
+═══════════════════════════════════════════════════════════════════════
+
+CHAPTER 6
+Implementation
+
+
+6.1 Development Environment Setup
+
+Operating System:
+• macOS (development machine)
+
+Backend Environment:
+• Python 3.x (installed via system or pyenv)
+• Virtual environment created in venv/
+• Dependencies installed via pip using backend/requirements.txt
+
+Commands (typical):
+• python -m venv venv
+• source venv/bin/activate
+• pip install -r backend/requirements.txt
+
+Frontend Environment:
+• Node.js and npm installed
+• React app created using Create React App (already in frontend/)
+• Dependencies installed via npm
+
+Commands (typical):
+• cd frontend
+• npm install
+• npm start (for development server)
+
+Local Run Setup:
+• Backend: flask app.py / python app.py on port 5001
+• Frontend: npm start serving on port 3000
+
+ML Model Preparation:
+• Pre-trained models stored under backend/saved_models/
+• crop_model.pkl, scalers, and label encoders loaded at startup
+• CNN model files for disease recognition loaded lazily when first needed
+
+{Table 6.1: Development Tools and Environment Setup}
+
+
+6.2 Coding Standards & Version Control Strategy
+
+Coding Standards:
+• Use of descriptive variable and function names (no single-letter variables except counters)
+• Consistent indentation and formatting
+• Separation of concerns through modularization (routes, models, services, utils)
+• Minimal inline comments where logic is non-trivial
+
+Python (Backend):
+• Organized into models/, portals/, services/, utils/
+• Each Flask blueprint in its own file for clarity
+• to_dict() methods on models for consistent serialization
+
+JavaScript (Frontend):
+• Functional React components with hooks
+• Separation of components into logical folders (auth, portals, shared)
+• CSS files colocated with related components where appropriate
+
+Version Control Strategy:
+• Git used as primary version control system
+• Project structured as a single repository with backend/ and frontend/ folders
+• Frequent commits after completing meaningful chunks of work
+• Commit messages follow pattern: "[Area] Short description"
+
+Examples:
+• [Backend] Add crop listing location field
+• [Frontend] Improve profile update error handling
+• [Portal] Implement buyer marketplace view
+
+Evidence of Version Control Usage:
+• git log shows chronological history of feature development
+• git diff used regularly to inspect changes
+• Branching can be adopted for future team collaboration
+
+
+6.3 Module-Wise Implementation
+
+This section summarizes implementation details for each major module, along with ownership and evidence of work.
+
+
+6.3.1 Authentication & Authorization Module
+
+Developer: Ali Azgor Rumi (Roll: 2103097)
+
+Scope:
+• User registration and login endpoints
+• JWT token generation and verification
+• Role-based access control utilities
+
+Key Files:
+• backend/utils/auth.py
+• backend/app.py (auth route registration)
+• backend/models/database.py (User model)
+
+Implementation Highlights:
+• Registration endpoint validates input, hashes passwords, and creates user records
+• Login endpoint verifies credentials and issues JWT with role and user ID
+• Decorators enforce that only authenticated users with correct roles can access portal APIs
+
+Evidence of Work:
+• Commit history showing introduction of auth utilities and refinement of token handling
+• Manual testing via Postman/curl to verify valid and invalid login attempts
+
+
+6.3.2 Database Models & Persistence Layer
+
+Developer: Ali Azgor Rumi
+
+Scope:
+• Definition of SQLAlchemy models for all entities
+• Relationship mapping and to_dict() implementations
+• Database initialization and migration fixes
+
+Key Files:
+• backend/models/database.py
+
+Implementation Highlights:
+• User, FarmerProfile, VendorProfile, LaborProfile models with proper foreign keys
+• CropListing model with added location column to support listing-specific locations
+• VendorProduct, Order, LaborHiring, CostRecord, RecommendationHistory models
+• to_dict() methods implemented to control JSON serialization
+
+Evidence of Work:
+• Manual execution of PRAGMA queries to verify schema correctness
+• Direct ALTER TABLE executed to add location column to existing database
+• Repeated testing to ensure models match actual SQLite schema
+
+
+6.3.3 Farmer Portal Module
+
+Developer: Ali Azgor Rumi
+
+Scope:
+• Farmer dashboard, crop listing management, cost tracking, labor posting, and ML tools
+
+Key Backend Files:
+• backend/portals/farmer_routes.py
+
+Key Frontend Files:
+• frontend/src/components/portals/FarmerPortal.js
+• frontend/src/components/CropRecommendation.js
+• frontend/src/components/FertilizerRecommendation.js
+• frontend/src/components/DiseaseRecognition.js
+
+Implementation Highlights:
+• REST endpoints for creating, reading, updating, deleting crop listings
+• Proper handling of location field at listing level
+• Cost recording endpoints and frontend forms for financial tracking
+• Integration of ML endpoints into crop and fertilizer recommendation UIs
+• Disease recognition image upload integrated with CNN backend service
+
+Evidence of Work:
+• Interactive farmer workflows tested in browser (create listing, edit listing, view costs)
+• Console logs and backend logs used to debug behaviors
+
+
+6.3.4 Buyer Portal Module
+
+Developer: Ali Azgor Rumi
+
+Scope:
+• Public marketplace browsing, cart management, order creation, and tracking
+
+Key Backend Files:
+• backend/portals/buyer_routes.py
+
+Key Frontend Files:
+• frontend/src/components/portals/BuyerPortal.js
+• frontend/src/components/LandingPage.js
+
+Implementation Highlights:
+• Marketplace endpoint exposing public crop listings for all users
+• Cart-like behavior implemented in frontend state (add/remove items, adjust quantity)
+• Order creation endpoint booking purchases against specific listings
+• Order tracking view showing status progression
+• Recent fix to ensure location shown in marketplace is listing.location, not only farmer profile location
+
+Evidence of Work:
+• Visual confirmation that marketplace cards now show correct location value
+• Testing different buyers to verify orders and histories are separated
+
+
+6.3.5 Vendor Portal Module
+
+Developer: Ali Azgor Rumi
+
+Scope:
+• Vendor product catalog management and sales analytics
+
+Key Backend Files:
+• backend/portals/vendor_routes.py
+
+Key Frontend Files:
+• frontend/src/components/portals/VendorPortal.js
+
+Implementation Highlights:
+• Product CRUD endpoints for vendors
+• Vendor orders endpoint retrieving orders involving vendor products
+• Vendor dashboard card showing product counts and sales summary
+
+Evidence of Work:
+• Manual creation of example vendor products and test orders
+• Frontend views showing table of products and order statistics
+
+
+6.3.6 Labor Portal Module
+
+Developer: Ali Azgor Rumi
+
+Scope:
+• Labor job discovery, application management, and earnings summary
+
+Key Backend Files:
+• backend/portals/labor_routes.py
+
+Key Frontend Files:
+• frontend/src/components/portals/LaborPortal.js
+
+Implementation Highlights:
+• Job listing endpoint aggregating labor opportunities posted by farmers
+• Application endpoint allowing laborers to apply for jobs
+• Application status tracking for laborers
+• Earnings summary calculation based on completed jobs (where implemented)
+
+Evidence of Work:
+• Test accounts for farmer and labor roles used to verify end-to-end job posting + application
+
+
+6.3.7 Admin Portal Module
+
+Developer: Ali Azgor Rumi
+
+Scope:
+• Platform analytics and user management
+
+Key Backend Files:
+• backend/portals/admin_routes.py
+
+Key Frontend Files:
+• frontend/src/components/portals/AdminPortal.js
+
+Implementation Highlights:
+• Summary statistics endpoint aggregating counts from multiple tables
+• User listing and status update endpoints
+• Admin dashboard visualizing user distribution and core metrics
+
+Evidence of Work:
+• Manual verification of counts against SQLite queries
+• Admin actions confirmed to affect user accessibility in other portals
+
+
+6.3.8 Shared Components & Styling
+
+Developer: Ali Azgor Rumi
+
+Scope:
+• Shared layout, navigation, profile editing, and CSS architecture
+
+Key Frontend Files:
+• frontend/src/components/shared/ProfileEditor.js
+• frontend/src/styles/*.css (admin.css, buyer.css, farmer.css, labor.css, vendor.css, main.css)
+
+Implementation Highlights:
+• ProfileEditor made reusable across all portals; handles token errors and messages gracefully
+• CSS refactored into role-specific files plus a central main.css
+• Consistent color palette and typography across the application
+
+Evidence of Work:
+• Reduced code duplication in profile forms across portals
+• Easier maintenance of styling through centralized design system
+
+
+6.4 System Integration Workflow
+
+Integration Approach:
+• Start with core auth integration (frontend login/register with backend auth APIs)
+• Integrate one portal at a time: farmer → buyer → vendor → labor → admin
+• For each portal: first wire up read-only views, then add create/update/delete actions
+
+Integration Steps:
+1. Configure Axios with base URL and auth header injection using stored JWT
+2. Protect portal routes on frontend; redirect unauthenticated users to login
+3. Add error handling for failed API calls (network, auth, validation)
+4. Sync backend response formats with frontend expectations
+5. Conduct manual walkthroughs of full user journeys from login to logout
+
+CORS & Networking:
+• Flask-CORS used to allow requests from http://localhost:3000 during development
+• Network tab in browser used to debug any CORS or status code issues
+
+
+6.5 Performance, Optimization, and Security Techniques
+
+Performance Techniques:
+• Avoided unnecessary re-renders in React by structuring state at appropriate component levels
+• Minimized payload size by carefully choosing fields returned in to_dict() methods
+• Reused Axios instances instead of reconfiguring for every call
+
+Optimization Decisions:
+• Lazy-loading and caching of ML models in backend services to prevent repeated heavy initializations
+• Query optimization by filtering in the database layer rather than in Python when possible
+
+Security Techniques:
+• Enforced JWT authentication on all non-public APIs
+• Ensured passwords never stored or transmitted in plain text
+• Validated incoming data to protect against SQL injection and malformed requests
+• Separated admin-only functionality at both API and UI levels
+
+Limitations & Future Hardening:
+• HTTPS termination not configured in development; to be added in production deployment
+• Rate limiting and IP-based throttling not yet implemented
+• More granular permission system could be added in future versions
+
+
+═══════════════════════════════════════════════════════════════════════
+
+[End of Part 2: Chapters 5–6. Remaining Chapters 7–10, References, and Appendices are provided in Part 3.]

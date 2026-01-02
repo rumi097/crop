@@ -1,0 +1,51 @@
+# Ignore Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Model files (can be large)
+*.pkl
+*.h5
+*.json
+saved_models/*.pkl
+saved_models/*.h5
+saved_models/*.json
+
+# Uploaded images
+uploads/*
+!uploads/.gitkeep
+
+# Data files
+data/*.csv
+data/fertilizer_images/train/*
+data/fertilizer_images/val/*
+!data/fertilizer_images/train/.gitkeep
+!data/fertilizer_images/val/.gitkeep
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
