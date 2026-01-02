@@ -12,4 +12,4 @@ cmds = [
 cmds = ['cd frontend && npm run build']
 
 [start]
-cmd = 'cd backend && python3 -m gunicorn --bind 0.0.0.0:$PORT app:app'
+cmd = 'python3 -m gunicorn --chdir backend -c gunicorn.conf.py "app:create_app()"'

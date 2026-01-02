@@ -19,5 +19,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Expose the port Railway will route to (PORT env is used at runtime)
 EXPOSE 8000
 
-# Use gunicorn with the Flask app factory (PORT provided by Railway)
-CMD ["gunicorn", "app:create_app()", "--bind", "0.0.0.0:${PORT:-8000}"]
+# Use gunicorn with the Flask app factory.
+# Note: don't rely on shell-style env expansion in exec-form CMD.
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:create_app()"]
