@@ -83,13 +83,16 @@ def register_farmer_routes(app):
             if not all(field in data for field in required_fields):
                 return jsonify({'error': 'Missing required fields'}), 400
 
-            recommendation = fertilizer_model.recommend(
-                soil_type=data['soil_type'],
-                crop_type=data['crop_type'],
-                nitrogen=float(data['N']),
-                phosphorus=float(data['P']),
-                potassium=float(data['K'])
-            )
+            if fertilizer_model is None:
+                return jsonify({'error': 'Fertilizer model not loaded'}), 500
+
+            recommendation = fertilizer_model.predict({
+                'soil_type': data['soil_type'],
+                'crop': data['crop_type'],
+                'N': float(data['N']),
+                'P': float(data['P']),
+                'K': float(data['K']),
+            })
 
             current_user = get_current_user()
             user = User.query.get(current_user['user_id'])

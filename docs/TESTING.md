@@ -154,18 +154,7 @@ print(f"Reason: {result['reason']}")
 
 ### Test CNN Model
 
-```python
-from models.disease_recognition import FertilizerDiseaseRecognitionModel
-
-# Load model
-cnn_model = FertilizerDiseaseRecognitionModel()
-cnn_model.load_model('backend/saved_models/fertilizer_cnn_model.h5')
-
-# Test prediction
-result = cnn_model.predict_image('path/to/test/image.jpg')
-print(f"Prediction: {result['prediction']}")
-print(f"Confidence: {result['confidence']*100:.2f}%")
-```
+Note: Disease recognition has been removed from this project.
 
 ## Frontend Testing Checklist
 
@@ -195,18 +184,7 @@ print(f"Confidence: {result['confidence']*100:.2f}%")
 
 ### Disease Recognition Page
 
-- [ ] File upload area accepts images
-- [ ] Drag and drop functionality works
-- [ ] File type validation (JPG, PNG, BMP)
-- [ ] File size validation (max 16MB)
-- [ ] Image preview displays correctly
-- [ ] Remove image button works
-- [ ] Analysis button triggers upload
-- [ ] Prediction displays with icon
-- [ ] Confidence bar animates correctly
-- [ ] All predictions list shows
-- [ ] Recommendations section displays
-- [ ] Analyze another button resets form
+Removed.
 
 ## Sample Test Data
 
@@ -341,7 +319,6 @@ ab -n 1000 -c 10 -p crop_test.json -T application/json \
 Expected response times:
 - Crop Recommendation: < 100ms
 - Fertilizer Recommendation: < 50ms
-- Disease Recognition: < 500ms (including image processing)
 - Health Check: < 10ms
 
 ## Integration Testing
@@ -361,10 +338,6 @@ curl -X POST http://localhost:5000/api/crop-recommendation \
 curl -X POST http://localhost:5000/api/fertilizer-recommendation \
   -H "Content-Type: application/json" \
   -d '{"N":30,"P":20,"K":25,"crop":"wheat","soil_type":"loamy"}'
-
-# 4. Upload image (requires actual image file)
-curl -X POST http://localhost:5000/api/disease-recognition \
-  -F "image=@test_image.jpg"
 ```
 
 ## Automated Testing

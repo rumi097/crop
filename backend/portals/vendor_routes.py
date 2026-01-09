@@ -2,7 +2,7 @@
 
 from flask import jsonify, request
 
-from models.database import db, User, UserRole, VendorProduct, Order
+from models.database import db, User, UserRole, VendorProduct, Order, OrderStatus
 from utils.auth import role_required, get_current_user
 
 
@@ -137,4 +137,45 @@ def register_vendor_routes(app):
             return jsonify({'success': True, 'orders': results})
 
         except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/vendor/orders/<int:order_id>', methods=['PUT'])
+    @role_required(UserRole.VENDOR)
+    def vendor_update_order(order_id):
+        """Update order status for orders containing this vendor's products."""
+        try:
+            current_user = get_current_user()
+            user = User.query.get(current_user['user_id'])
+
+            if not user or not user.vendor_profile:
+                return jsonify({'error': 'Vendor profile not found'}), 404
+
+            order = Order.query.get(order_id)
+            if not order or not order.vendor_product_id:
+                return jsonify({'error': 'Order not found'}), 404
+
+            # Ensure the order belongs to this vendor
+            product_ids = {p.id for p in user.vendor_profile.products}
+            if order.vendor_product_id not in product_ids:
+                return jsonify({'error': 'Not authorized to update this order'}), 403
+
+            data = request.json or {}
+            new_status = data.get('status')
+            if not new_status:
+                return jsonify({'error': 'Missing status'}), 400
+
+            try:
+                order.status = OrderStatus(new_status)
+            except ValueError:
+                allowed = [s.value for s in OrderStatus]
+                return jsonify({'error': f'Invalid status. Allowed: {allowed}'}), 400
+
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Order updated', 'order': {
+                'id': order.id,
+                'status': order.status.value,
+            }})
+
+        except Exception as e:
+            db.session.rollback()
             return jsonify({'error': str(e)}), 500

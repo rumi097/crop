@@ -9,6 +9,7 @@ from models.database import (
     CropListing, VendorProduct
 )
 from utils.auth import generate_token, login_required, get_current_user
+from models.fertilizer_recommendation import FertilizerRecommendationModel
 
 
 def register_auth_routes(app):
@@ -88,6 +89,22 @@ def register_auth_routes(app):
         
         except Exception as e:
             return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/available-crops', methods=['GET'])
+    def get_available_crops():
+        """Get supported crops for fertilizer recommendation UI."""
+        try:
+            crops = sorted(
+                [c for c in FertilizerRecommendationModel.CROP_REQUIREMENTS.keys() if c != 'default']
+            )
+            return jsonify({'success': True, 'crops': crops})
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/soil-types', methods=['GET'])
+    def get_soil_types():
+        """Get supported soil types for fertilizer recommendation UI."""
+        return jsonify({'success': True, 'soil_types': ['loamy', 'sandy', 'clayey']})
     
     @app.route('/api/auth/register', methods=['POST'])
     def register():

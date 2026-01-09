@@ -1,7 +1,7 @@
 {
   "name": "crop-recommendation-frontend",
   "version": "1.0.0",
-  "description": "React frontend for Crop, Fertilizer Recommendation & Disease Recognition System",
+  "description": "React frontend for Crop & Fertilizer Recommendation System",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",

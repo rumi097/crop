@@ -12,7 +12,6 @@ Crop/
 │   ├── models/          # Database models
 │   │   ├── database.py  # SQLAlchemy models
 │   │   ├── crop_recommendation.py
-│   │   ├── disease_recognition.py
 │   │   └── fertilizer_recommendation.py
 │   ├── portals/         # Portal-specific routes
 │   │   ├── admin_routes.py
@@ -139,7 +138,6 @@ Crop/
 
 ### 1. **Farmer Portal** 🚜
 - Crop recommendations based on soil and weather
-- Disease recognition with image upload
 - Fertilizer recommendations
 - Marketplace for selling crops
 - Cost tracking and financial management
@@ -210,7 +208,6 @@ This project is licensed under the MIT License.
 
 - ✅ Multi-role authentication system
 - ✅ ML-powered crop recommendations
-- ✅ Disease recognition with CNN
 - ✅ Real-time marketplace
 - ✅ Financial tracking
 - ✅ Equipment sharing economy

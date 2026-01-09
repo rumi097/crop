@@ -2,7 +2,7 @@
 
 from flask import jsonify
 
-from models.database import User, UserRole, LaborHiring
+from models.database import db, User, UserRole, LaborHiring
 from utils.auth import role_required, get_current_user
 
 

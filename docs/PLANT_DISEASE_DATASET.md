@@ -209,21 +209,7 @@ python app.py
 
 ### Test via Web Interface
 
-1. Start both backend and frontend
-2. Navigate to "Plant Disease Detection" tab
-3. Upload a plant image
-4. View detection results with:
-   - Detected crop
-   - Disease name
-   - Confidence score
-   - Top 3 predictions
-
-### Test via API (curl)
-
-```bash
-curl -X POST http://localhost:5001/api/disease-recognition \
-  -F "image=@path/to/plant_image.jpg"
-```
+Note: The Disease Recognition feature and its API endpoint have been removed from this project.
 
 ## 📊 Model Performance
 
@@ -241,8 +227,7 @@ Per-crop performance varies based on:
 
 ### GPU Out of Memory
 ```python
-# In train_plant_disease_model.py, reduce batch size:
-BATCH_SIZE = 64  # or 32
+# (Obsolete) Training scripts for disease recognition were removed.
 ```
 
 ### Slow Training on CPU
