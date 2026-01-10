@@ -20,7 +20,7 @@ from models.database import (
     OrderStatus,
 )
 from utils.auth import role_required, get_current_user
-from services.ml_models import load_models, crop_model, fertilizer_model
+import services.ml_models as ml_models
 
 # Weather API configuration (kept close to weather endpoint)
 WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY', 'your-api-key')
@@ -35,14 +35,14 @@ def register_farmer_routes(app):
     def farmer_crop_recommendation():
         """Get crop recommendation for farmer"""
         try:
-            load_models()
+            ml_models.load_models()
             data = request.json
 
             required_fields = ['N', 'P', 'K', 'temperature', 'humidity', 'pH', 'rainfall']
             if not all(field in data for field in required_fields):
                 return jsonify({'error': 'Missing required fields'}), 400
 
-            if crop_model is None:
+            if ml_models.crop_model is None:
                 return jsonify({'error': 'Crop model not loaded'}), 500
 
             features = [
@@ -51,7 +51,7 @@ def register_farmer_routes(app):
                 float(data['pH']), float(data['rainfall'])
             ]
 
-            recommendation = crop_model.predict(features)
+            recommendation = ml_models.crop_model.predict(features)
 
             current_user = get_current_user()
             user = User.query.get(current_user['user_id'])
@@ -76,17 +76,17 @@ def register_farmer_routes(app):
     def farmer_fertilizer_recommendation():
         """Get fertilizer recommendation for farmer"""
         try:
-            load_models()
+            ml_models.load_models()
             data = request.json
 
             required_fields = ['soil_type', 'crop_type', 'N', 'P', 'K']
             if not all(field in data for field in required_fields):
                 return jsonify({'error': 'Missing required fields'}), 400
 
-            if fertilizer_model is None:
+            if ml_models.fertilizer_model is None:
                 return jsonify({'error': 'Fertilizer model not loaded'}), 500
 
-            recommendation = fertilizer_model.predict({
+            recommendation = ml_models.fertilizer_model.predict({
                 'soil_type': data['soil_type'],
                 'crop': data['crop_type'],
                 'N': float(data['N']),

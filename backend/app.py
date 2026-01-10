@@ -51,7 +51,7 @@ def create_app():
 
     # Create necessary folders
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    os.makedirs('saved_models', exist_ok=True)
+    os.makedirs(os.path.join(os.path.dirname(__file__), 'saved_models'), exist_ok=True)
 
     # Initialize database
     init_db(app)
